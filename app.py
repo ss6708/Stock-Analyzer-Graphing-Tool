@@ -4,9 +4,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # Load data
-main_dir = "C:/Users/suram/OneDrive/Desktop/Code/Stock Performance Analyzer/"
-prices = pd.read_csv(main_dir + "sp500_stocks.csv", parse_dates=['Date'], infer_datetime_format='%d/%m/%Y').sort_values(by=['Symbol', 'Date'], ignore_index=True)
-stocks = pd.read_csv(main_dir + "sp500_companies.csv")
+prices = pd.read_csv("https://raw.githubusercontent.com/ss6708/Stock-Analyzer-Graphing-Tool/main/sp500_stocks.csv", parse_dates=['Date'], infer_datetime_format='%d/%m/%Y').sort_values(by=['Symbol', 'Date'], ignore_index=True)
+stocks = pd.read_csv("https://raw.githubusercontent.com/ss6708/Stock-Analyzer-Graphing-Tool/main/sp500_companies.csv")
 
 # Merge and prepare data
 sp500 = pd.merge(prices, stocks, on='Symbol')
