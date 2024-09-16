@@ -1,5 +1,7 @@
 ### Stock Performance Analyzer
 
+**Web App**: https://stock-analyzer-graphing-tool-wxkjtzcomw3lkjlmjnndrk.streamlit.app/ 
+
 **Overview**:
 The Stock Performance Analyzer is a Streamlit web application designed for visualizing stock performance. It allows users to select an S&P 500 company and view 3 performance metrics for that stock. 
 
