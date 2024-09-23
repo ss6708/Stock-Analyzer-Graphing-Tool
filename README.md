@@ -1,11 +1,11 @@
 ### Stock Performance Analyzer
 
-**Web App**: https://stock-analyzer-graphing-tool-wxkjtzcomw3lkjlmjnndrk.streamlit.app/ 
+**[Web App](https://stock-analyzer-graphing-tool-ss6708.streamlit.app)**
 
 **Overview**:
 The Stock Performance Analyzer is a Streamlit web application designed for visualizing stock performance. It allows users to select an S&P 500 company and view 3 performance metrics for that stock. 
 
-Data source: https://www.kaggle.com/datasets/andrewmvd/sp-500-stocks
+[Data source](https://www.kaggle.com/datasets/andrewmvd/sp-500-stocks)
 
 **Features**:
 1. **Stock Selection**: Choose a stock from the S&P 500 list. The app only includes stocks with available sample data on daily pricing numbers from Kaggle.
