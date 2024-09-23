@@ -12,7 +12,21 @@ sp500 = pd.merge(prices, stocks, on='Symbol')
 sp500['Return'] = sp500.groupby('Symbol')['Adj Close'].pct_change()
 sp500['Volatility'] = sp500.groupby('Symbol')['Return'].rolling(window=30).std().reset_index(level=0, drop=True)
 
-# RSI calculation function
+# UI
+st.title('Stock Performance Analyzer')
+available_symbols = sp500['Symbol'].unique()
+company_names = stocks.set_index('Symbol')['Shortname']
+available_names = company_names[company_names.index.isin(available_symbols)].to_dict()
+selected_stock = st.selectbox('Select a stock:', options=list(available_names.values()))
+plot_option = st.radio('Select graph to display:', options=['50-Day Moving Average', '200-Day Moving Average', 'Relative Strength Index'])
+selected_symbol = [symbol for symbol, name in available_names.items() if name == selected_stock][0]
+
+# Data selection
+stock_data = sp500[sp500['Symbol'] == selected_symbol]
+
+stock_data_rsi = apply_rsi_strategy(stock_data.copy())
+
+# Calculate RSI 
 def compute_rsi(data, period=14):
     delta = data['Adj Close'].diff()
     gain = (delta.where(delta > 0, 0)).rolling(window=period).mean()
@@ -20,8 +34,7 @@ def compute_rsi(data, period=14):
     rs = gain / loss
     rsi = 100 - (100 / (1 + rs))
     return rsi
-
-# Apply RSI strategy
+    
 def apply_rsi_strategy(data, period=14, overbought=70, oversold=30):
     data['RSI'] = compute_rsi(data, period)
     data['Signal'] = 0
@@ -33,27 +46,7 @@ def apply_rsi_strategy(data, period=14, overbought=70, oversold=30):
     data['Cumulative_Strategy_Return'] = (1 + data['Strategy_Return']).cumprod() - 1
     return data
 
-# Sidebar for user input
-st.title('Stock Performance Analyzer')
-
-# Get the list of symbols available in the prices dataset
-available_symbols = sp500['Symbol'].unique()
-company_names = stocks.set_index('Symbol')['Shortname']
-available_names = company_names[company_names.index.isin(available_symbols)].to_dict()
-
-selected_stock = st.selectbox('Select a stock:', options=list(available_names.values()))
-plot_option = st.radio('Select graph to display:', options=['50-Day Moving Average', '200-Day Moving Average', 'Relative Strength Index'])
-
-# Map the selected stock name back to the symbol
-selected_symbol = [symbol for symbol, name in available_names.items() if name == selected_stock][0]
-
-# Data preparation for selected stock
-stock_data = sp500[sp500['Symbol'] == selected_symbol]
-
-# Apply RSI strategy
-stock_data_rsi = apply_rsi_strategy(stock_data.copy())
-
-# Plotting function for RSI
+# Plotting RSI
 def plot_rsi(data, symbol):
     plt.figure(figsize=(14, 7))
     plt.plot(data['Date'], data['Adj Close'], label='Adjusted Close Price')
@@ -66,7 +59,11 @@ def plot_rsi(data, symbol):
     plt.legend()
     st.pyplot(plt)
 
-# Plotting function for Moving Averages
+# Calculate moving averages
+stock_data['MA_50'] = stock_data['Adj Close'].rolling(window=50).mean()
+stock_data['MA_200'] = stock_data['Adj Close'].rolling(window=200).mean()
+
+# Plotting Moving Averages
 def plot_moving_averages(data, symbol, ma_period):
     plt.figure(figsize=(14, 7))
     plt.plot(data['Date'], data['Adj Close'], label='Adjusted Close Price')
@@ -76,10 +73,6 @@ def plot_moving_averages(data, symbol, ma_period):
     plt.title(f'{symbol} {ma_period}-Day Moving Average')
     plt.legend()
     st.pyplot(plt)
-
-# Calculate moving averages
-stock_data['MA_50'] = stock_data['Adj Close'].rolling(window=50).mean()
-stock_data['MA_200'] = stock_data['Adj Close'].rolling(window=200).mean()
 
 # Display selected graph
 if plot_option == '50-Day Moving Average':
