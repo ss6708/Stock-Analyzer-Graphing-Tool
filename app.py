@@ -34,15 +34,15 @@ def apply_rsi_strategy(data, period=14, overbought=70, oversold=30):
     return data
 
 # Sidebar for user input
-st.sidebar.title('Stock Performance Analyzer')
+st.title('Stock Performance Analyzer')
 
 # Get the list of symbols available in the prices dataset
 available_symbols = sp500['Symbol'].unique()
 company_names = stocks.set_index('Symbol')['Shortname']
 available_names = company_names[company_names.index.isin(available_symbols)].to_dict()
 
-selected_stock = st.sidebar.selectbox('Select a stock:', options=list(available_names.values()))
-plot_option = st.sidebar.radio('Select graph to display:', options=['50-Day Moving Average', '200-Day Moving Average', 'Relative Strength Index'])
+selected_stock = st.selectbox('Select a stock:', options=list(available_names.values()))
+plot_option = st.radio('Select graph to display:', options=['50-Day Moving Average', '200-Day Moving Average', 'Relative Strength Index'])
 
 # Map the selected stock name back to the symbol
 selected_symbol = [symbol for symbol, name in available_names.items() if name == selected_stock][0]
