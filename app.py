@@ -21,11 +21,6 @@ selected_stock = st.selectbox('Select a stock:', options=list(available_names.va
 plot_option = st.radio('Select graph to display:', options=['50-Day Moving Average', '200-Day Moving Average', 'Relative Strength Index'])
 selected_symbol = [symbol for symbol, name in available_names.items() if name == selected_stock][0]
 
-# Data selection
-stock_data = sp500[sp500['Symbol'] == selected_symbol]
-
-stock_data_rsi = apply_rsi_strategy(stock_data.copy())
-
 # Calculate RSI 
 def compute_rsi(data, period=14):
     delta = data['Adj Close'].diff()
@@ -45,6 +40,10 @@ def apply_rsi_strategy(data, period=14, overbought=70, oversold=30):
     data['Cumulative_Return'] = (1 + data['Return']).cumprod() - 1
     data['Cumulative_Strategy_Return'] = (1 + data['Strategy_Return']).cumprod() - 1
     return data
+
+# Data selection
+stock_data = sp500[sp500['Symbol'] == selected_symbol]
+stock_data_rsi = apply_rsi_strategy(stock_data.copy())
 
 # Plotting RSI
 def plot_rsi(data, symbol):
