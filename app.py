@@ -17,66 +17,41 @@ st.title('Stock Performance Analyzer')
 available_symbols = sp500['Symbol'].unique()
 company_names = stocks.set_index('Symbol')['Shortname']
 available_names = company_names[company_names.index.isin(available_symbols)].to_dict()
-selected_stock = st.selectbox('Select a stock:', options=list(available_names.values()))
-plot_option = st.radio('Select graph to display:', options=['50-Day Moving Average', '200-Day Moving Average', 'Relative Strength Index'])
-selected_symbol = [symbol for symbol, name in available_names.items() if name == selected_stock][0]
 
-# Calculate RSI 
-def compute_rsi(data, period=14):
-    delta = data['Adj Close'].diff()
-    gain = (delta.where(delta > 0, 0)).rolling(window=period).mean()
-    loss = (-delta.where(delta < 0, 0)).rolling(window=period).mean()
-    rs = gain / loss
-    rsi = 100 - (100 / (1 + rs))
-    return rsi
-    
-def apply_rsi_strategy(data, period=14, overbought=70, oversold=30):
-    data['RSI'] = compute_rsi(data, period)
-    data['Signal'] = 0
-    data.loc[data['RSI'] < oversold, 'Signal'] = 1  # Buy signal
-    data.loc[data['RSI'] > overbought, 'Signal'] = -1  # Sell signal
-    data['Position'] = data['Signal'].shift(1)
-    data['Strategy_Return'] = data['Return'] * data['Position']
-    data['Cumulative_Return'] = (1 + data['Return']).cumprod() - 1
-    data['Cumulative_Strategy_Return'] = (1 + data['Strategy_Return']).cumprod() - 1
-    return data
+selected_stocks = st.sidebar.multiselect(
+    'Select stocks to compare:', 
+    options=list(available_names.values()), 
+    default=list(available_names.values())[:5]  # Default to the first 5 stocks
+)
 
-# Data selection
-stock_data = sp500[sp500['Symbol'] == selected_symbol]
-stock_data_rsi = apply_rsi_strategy(stock_data.copy())
+# Map selected stock names back to their symbols
+selected_symbols = [symbol for symbol, name in available_names.items() if name in selected_stocks]
 
-# Plotting RSI
-def plot_rsi(data, symbol):
+# Prepare data for the selected stocks
+filtered_data = sp500[sp500['Symbol'].isin(selected_symbols)]
+
+# Calculate returns and cumulative returns
+filtered_data['Return'] = filtered_data.groupby('Symbol')['Adj Close'].pct_change(fill_method=None)
+
+# Calculate cumulative returns
+filtered_data['Cumulative_Return'] = (
+    filtered_data.groupby('Symbol')['Return']
+    .apply(lambda x: (1 + x).cumprod() - 1)
+    .reset_index(level=0, drop=True)  # Reset index to align with the original DataFrame
+)
+
+# Plot cumulative returns
+def plot_cumulative_returns(data, symbols):
     plt.figure(figsize=(14, 7))
-    plt.plot(data['Date'], data['Adj Close'], label='Adjusted Close Price')
-    plt.axhline(y=70, color='red', linestyle='--', label='RSI 70 (Overbought)')
-    plt.axhline(y=30, color='green', linestyle='--', label='RSI 30 (Oversold)')
-    plt.plot(data['Date'], data['RSI'], label='RSI', color='orange')
+    for symbol in symbols:
+        stock_data = data[data['Symbol'] == symbol]
+        plt.plot(stock_data['Date'], stock_data['Cumulative_Return'], label=f"{symbol}")
     plt.xlabel('Date')
-    plt.ylabel('Price / RSI')
-    plt.title(f'{symbol} RSI')
+    plt.ylabel('Cumulative Return')
+    plt.title('Cumulative Returns Comparison')
     plt.legend()
     st.pyplot(plt)
 
-# Calculate moving averages
-stock_data['MA_50'] = stock_data['Adj Close'].rolling(window=50).mean()
-stock_data['MA_200'] = stock_data['Adj Close'].rolling(window=200).mean()
-
-# Plotting Moving Averages
-def plot_moving_averages(data, symbol, ma_period):
-    plt.figure(figsize=(14, 7))
-    plt.plot(data['Date'], data['Adj Close'], label='Adjusted Close Price')
-    plt.plot(data['Date'], data[f'MA_{ma_period}'], label=f'{ma_period}-Day Moving Average', color='orange')
-    plt.xlabel('Date')
-    plt.ylabel('Price')
-    plt.title(f'{symbol} {ma_period}-Day Moving Average')
-    plt.legend()
-    st.pyplot(plt)
-
-# Display selected graph
-if plot_option == '50-Day Moving Average':
-    plot_moving_averages(stock_data, selected_symbol, 50)
-elif plot_option == '200-Day Moving Average':
-    plot_moving_averages(stock_data, selected_symbol, 200)
-elif plot_option == 'Relative Strength Index':
-    plot_rsi(stock_data_rsi, selected_symbol)
+# Display the graph
+if st.sidebar.checkbox('Show Cumulative Returns Comparison', value=True):
+    plot_cumulative_returns(filtered_data, selected_symbols)
